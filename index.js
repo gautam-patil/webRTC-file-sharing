@@ -68,22 +68,31 @@ peer.on('error' , (err)=>{
   alert(err.type);
 });
 
+// peer.on('connection', function(conn) {
+//   conn.on('data', function(data){
+//     // Will print 'hi!'
+//     // alert("first peer"+data);
+//     const a = document.createElement('a')
+//     function downloadBuffer(data, fileName) {
+//       a.href = URL.createObjectURL(new Blob(
+//         [ data ]
+//       ))
+//       a.download = fileName
+//       a.click()
+//     }
+//     downloadBuffer(data, "sample.pdf")
+//   });
+// });
+
 peer.on('connection', function(conn) {
+  const chunks = [];
   conn.on('data', function(data){
-    // Will print 'hi!'
-    // alert("first peer"+data);
-    function downloadBuffer(data, fileName) {
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(new Blob(
-        [ data ],
-        { type: 'application/pdf' }
-      ))
-      a.download = fileName
-      a.click()
-    }
-    downloadBuffer(data, "sample.pdf")
+      chunks.push(data);
+
   });
+  Buffer.concat(chunks)
 });
+
 
 //Form Function
 var conn = null;
@@ -103,8 +112,23 @@ function myFunction() {
 
 function upload() {
   var file = document.getElementById("file").files[0]
-  console.log(file);
-  conn.send(file);
+  var chunkSize = 1024 * 1024;
+  var fileSize = file.size;
+  var chunks = Math.ceil(file.size/chunkSize,chunkSize);
+  var chunk = 0;
+
+  console.log('file size..',fileSize);
+  console.log('chunks...',chunks);
+
+  while (chunk <= chunks) {
+      var offset = chunk*chunkSize;
+      console.log('current chunk..', chunk);
+      console.log('offset...', chunk*chunkSize);
+      console.log('file blob from offset...', offset)
+      console.log(file.slice(offset,offset+chunkSize));
+      conn.send(file.slice(offset,offset+chunkSize));
+      chunk++;
+  }
 }
 
 
